@@ -3,13 +3,13 @@ import React from "react";
 import SidebarStepper from "../stepper/SidebarStepper";
 import type { StepKey } from "../../pages/ExitInterviewWizard";
 
-export interface DHLLayOutProps {
+export interface DHLLayoutProps {
   children: React.ReactNode;
-  currentStep: StepKey | string;
+  currentStep?: StepKey | string; // now optional
   onStepChange?: (stepKey: StepKey) => void;
 }
 
-const DHLLayout: React.FC<DHLLayOutProps> = ({
+const DHLLayout: React.FC<DHLLayoutProps> = ({
   children,
   currentStep,
   onStepChange,
@@ -38,10 +38,12 @@ const DHLLayout: React.FC<DHLLayOutProps> = ({
       <main className="dhl-shell">
         <div className="dhl-shell__inner">
           <aside className="dhl-shell__sidebar">
-            <SidebarStepper
-              currentStep={currentStep}
-              onStepChange={onStepChange}
-            />
+            {currentStep && (
+              <SidebarStepper
+                currentStep={currentStep}
+                onStepChange={onStepChange}
+              />
+            )}
           </aside>
 
           <section className="dhl-shell__content">
