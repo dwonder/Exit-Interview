@@ -1,0 +1,815 @@
+/* 
+  Global base
+  You can use this as your main index.css or merge into your existing stylesheet.
+*/
+
+:root {
+  --dhl-yellow: #ffcc00;
+  --dhl-red: #d40511;
+  --dhl-bg: #f6f5f2;
+  --dhl-shell-bg: #ffffff;
+  --dhl-border-subtle: #e4e2da;
+  --dhl-text-main: #222222;
+  --dhl-text-muted: #666666;
+}
+
+/* Reset-ish */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter",
+    "Segoe UI", sans-serif;
+  background: var(--dhl-bg);
+  color: var(--dhl-text-main);
+}
+
+/* ===========================
+   Layout shell
+   =========================== */
+
+.dhl-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dhl-root__bg {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #fff9d9 0%,
+    #f6f5f2 45%,
+    #f6f5f2 100%
+  );
+  z-index: -1;
+}
+
+/* Header with DHL logo + title */
+
+.dhl-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 16px 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.dhl-header__left {
+  display: flex;
+  align-items: center;
+}
+
+.dhl-logo {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--dhl-yellow);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+.dhl-logo__mark {
+  font-weight: 800;
+  letter-spacing: 1px;
+  font-size: 18px;
+  color: var(--dhl-red);
+  margin-right: 6px;
+}
+
+.dhl-logo__country {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5b3e00;
+  text-transform: uppercase;
+}
+
+.dhl-header__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dhl-header__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dhl-header__subtitle {
+  font-size: 12px;
+  color: var(--dhl-text-muted);
+}
+
+/* Main shell */
+
+.dhl-shell {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px 24px;
+}
+
+.dhl-shell__inner {
+  max-width: 1200px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* Sidebar */
+
+.dhl-shell__sidebar {
+  position: sticky;
+  top: 80px;
+}
+
+/* Content card */
+
+.dhl-shell__content {
+  min-width: 0;
+}
+
+.dhl-card {
+  background: var(--dhl-shell-bg);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--dhl-border-subtle);
+  overflow: hidden;
+}
+
+/* Card hero with visual placeholder */
+
+.dhl-card__hero {
+  display: flex;
+  gap: 14px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--dhl-border-subtle);
+  background: #fffdf3;
+}
+
+.dhl-card__hero-graphic {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 0 0, #fffbe6 0, #ffe37c 40%, #ffcc00 80%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Little truck/package shapes inside graphic */
+.dhl-card__hero-graphic::before,
+.dhl-card__hero-graphic::after {
+  content: "";
+  position: absolute;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.dhl-card__hero-graphic::before {
+  width: 32px;
+  height: 22px;
+  bottom: 12px;
+  left: 10px;
+}
+
+.dhl-card__hero-graphic::after {
+  width: 22px;
+  height: 16px;
+  bottom: 8px;
+  left: 40px;
+}
+
+.dhl-card__hero-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.dhl-card__hero-title {
+  margin: 2px 0 2px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.dhl-card__hero-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dhl-text-muted);
+}
+
+/* Card body (where pages render their own content) */
+
+.dhl-card__body {
+  padding: 18px 20px 22px;
+}
+
+/* Footer */
+
+.dhl-footer {
+  max-width: 1200px;
+  margin: 0 auto 12px;
+  padding: 0 16px;
+}
+
+.dhl-footer__text {
+  font-size: 11px;
+  color: var(--dhl-text-muted);
+}
+
+/* ===========================
+   Sidebar stepper
+   =========================== */
+
+.dhl-stepper {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--dhl-border-subtle);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  padding: 10px 12px 12px;
+}
+
+.dhl-stepper__header {
+  padding: 4px 4px 8px;
+}
+
+.dhl-stepper__badge {
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #fff6cc;
+}
+
+.dhl-stepper__badge-main {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dhl-stepper__badge-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--dhl-text-muted);
+}
+
+.dhl-stepper__list {
+  list-style: none;
+  padding: 4px 0 0;
+  margin: 0;
+}
+
+.dhl-stepper__item {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.dhl-stepper__button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: flex-start;
+  padding: 6px 4px;
+  text-align: left;
+  cursor: default;
+}
+
+.dhl-stepper__button--clickable {
+  cursor: pointer;
+}
+
+.dhl-stepper__button--active {
+  background: #fff7d9;
+  border-radius: 8px;
+}
+
+.dhl-stepper__button--completed .dhl-stepper__label {
+  color: #0b4b3a;
+}
+
+.dhl-stepper__circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid #c0b9a5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 8px;
+  background: #ffffff;
+}
+
+.dhl-stepper__circle--active {
+  border-color: var(--dhl-yellow);
+}
+
+.dhl-stepper__circle--completed {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.dhl-stepper__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.dhl-stepper__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dhl-text-main);
+}
+
+.dhl-stepper__description {
+  display: block;
+  font-size: 11px;
+  color: var(--dhl-text-muted);
+}
+
+.dhl-stepper__connector {
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+  width: 2px;
+  background: #e7e2d3;
+}
+
+.dhl-stepper__footer {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e7e2d3;
+}
+
+.dhl-stepper__hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--dhl-text-muted);
+}
+
+/* ===========================
+   Review page
+   =========================== */
+
+.dhl-review {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(260px, 1.3fr);
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.dhl-review__main {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--dhl-border-subtle);
+  padding: 20px 24px 24px;
+}
+
+.dhl-review__title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--dhl-text-main);
+}
+
+.dhl-review__intro {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--dhl-text-muted);
+}
+
+.dhl-review__section {
+  border-radius: 10px;
+  border: 1px solid #ece8dc;
+  padding: 14px 16px 16px;
+  margin-bottom: 14px;
+  background: #faf9f5;
+}
+
+.dhl-review__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dhl-review__section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--dhl-text-main);
+}
+
+.dhl-link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dhl-red);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dhl-review__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 18px;
+  margin: 0;
+}
+
+.dhl-review__grid > div {
+  min-width: 0;
+}
+
+.dhl-review__grid--full {
+  grid-column: 1 / -1;
+}
+
+.dhl-review__grid dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--dhl-text-muted);
+  margin-bottom: 2px;
+}
+
+.dhl-review__grid dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dhl-text-main);
+}
+
+.dhl-review__attachments ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.dhl-review__attachments li {
+  font-size: 13px;
+}
+
+.dhl-review__muted {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--dhl-text-muted);
+}
+
+.dhl-review__submit-area {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed #e0ddd3;
+}
+
+.dhl-review__disclaimer {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dhl-text-muted);
+  margin: 0 0 12px;
+}
+
+.dhl-review__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Buttons */
+
+.dhl-button {
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dhl-button--primary {
+  background: linear-gradient(90deg, var(--dhl-yellow), #ffd94d);
+  color: #5c0900;
+  border-color: #f0b700;
+  box-shadow: 0 3px 10px rgba(255, 204, 0, 0.4);
+}
+
+.dhl-button--primary:disabled {
+  opacity: 0.7;
+  cursor: default;
+  box-shadow: none;
+}
+
+.dhl-button--secondary {
+  background: #ffffff;
+  color: var(--dhl-text-main);
+  border-color: var(--dhl-border-subtle);
+}
+
+/* Right-hand visual panel */
+
+.dhl-review__visual {
+  align-self: stretch;
+}
+
+.dhl-review__visual-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--dhl-border-subtle);
+  padding: 16px 18px 18px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+/* Graphic placeholder - replace with real DHL image later */
+.dhl-review__visual-graphic {
+  width: 100%;
+  height: 160px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 0 0, #fffbe6 0, #ffe37c 35%, #ffcc00 70%, #ffd94d 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.dhl-review__visual-graphic::before,
+.dhl-review__visual-graphic::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+}
+
+.dhl-review__visual-graphic::before {
+  width: 72px;
+  height: 44px;
+  bottom: 30px;
+  left: 16px;
+}
+
+.dhl-review__visual-graphic::after {
+  width: 48px;
+  height: 32px;
+  bottom: 18px;
+  left: 100px;
+}
+
+.dhl-review__visual-text {
+  margin-top: 12px;
+}
+
+.dhl-review__visual-text h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dhl-review__visual-text p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--dhl-text-muted);
+}
+
+.dhl-review__visual-text ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.dhl-review__visual-text li {
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 960px) {
+  .dhl-shell__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dhl-shell__sidebar {
+    position: static;
+  }
+
+  .dhl-review {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dhl-review__visual {
+    order: -1;
+  }
+
+  .dhl-review__main {
+    padding: 16px 16px 20px;
+  }
+}
+
+/* ===========================
+   Generic page + form styles
+   =========================== */
+
+.dhl-page {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.dhl-page__title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.dhl-page__subtitle {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--dhl-text-muted);
+}
+
+.dhl-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dhl-form__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.dhl-form__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dhl-text-main);
+  margin-bottom: 4px;
+}
+
+.dhl-form__label-required {
+  color: var(--dhl-red);
+  margin-right: 3px;
+}
+
+.dhl-form__control {
+  border-radius: 8px;
+  border: 1px solid var(--dhl-border-subtle);
+  font-size: 14px;
+  padding: 8px 10px;
+  font-family: inherit;
+  min-height: 40px;
+}
+
+.dhl-form__control--textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.dhl-form__control:focus {
+  outline: none;
+  border-color: var(--dhl-yellow);
+  box-shadow: 0 0 0 1px rgba(255, 204, 0, 0.55);
+}
+
+.dhl-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* ===========================
+   Attachments / Upload UI
+   =========================== */
+
+.dhl-upload {
+  margin-bottom: 20px;
+}
+
+.dhl-upload__input {
+  display: none;
+}
+
+.dhl-upload__box {
+  width: 100%;
+  border-radius: 12px;
+  border: 2px dashed var(--dhl-border-subtle);
+  background: #fffdf3;
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.dhl-upload__box:hover {
+  border-color: var(--dhl-yellow);
+  background: #fff9df;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+.dhl-upload__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--dhl-yellow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--dhl-red);
+}
+
+.dhl-upload__text {
+  text-align: left;
+}
+
+.dhl-upload__title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dhl-text-main);
+}
+
+.dhl-upload__subtitle {
+  display: block;
+  font-size: 12px;
+  color: var(--dhl-text-muted);
+}
+
+/* File list */
+
+.dhl-upload__list {
+  margin-top: 14px;
+}
+
+.dhl-upload__list-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dhl-upload__list ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.dhl-upload__item {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dhl-upload__item-name {
+  flex: 1;
+  word-break: break-all;
+}
+
+.dhl-upload__remove {
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: var(--dhl-red);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Centering for main shell (desktop) */
+
+.dhl-shell {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* NEW: vertical center */
+  padding: 24px 16px;
+}
+
+.dhl-shell__inner {
+  max-width: 1200px;
+  width: 100%;
+}
+
+/* For pages that want the card in the absolute middle (like Welcome) */
+.dhl-shell--center {
+  justify-content: center;
+  align-items: center;
+}
+
