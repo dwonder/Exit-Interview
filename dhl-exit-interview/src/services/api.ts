@@ -1,7 +1,11 @@
 import type { ExitInterviewPayload } from "../types/ExitInterviewPayload";
 
-// Use env variable in production; fall back to /api for local dev
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+// Temporary: use Azure API directly in production, /api for local dev.
+// You can later revert to VITE_API_BASE_URL once env wiring is stable.
+const BASE_URL =
+  import.meta.env.MODE === "production"
+    ? "https://exit-api-app-h4bng6ajeqdxbmc7.westeurope-01.azurewebsites.net/api"
+    : "/api";
 
 export async function submitExitInterview(
   data: ExitInterviewPayload
