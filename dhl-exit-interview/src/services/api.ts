@@ -1,7 +1,7 @@
 import type { ExitInterviewPayload } from "../types/ExitInterviewPayload";
 
-// Use a relative API base; Vite proxy sends it to backend
-const BASE_URL = "/api";
+// Use env variable in production; fall back to /api for local dev
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export async function submitExitInterview(
   data: ExitInterviewPayload

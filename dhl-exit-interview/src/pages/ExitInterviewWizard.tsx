@@ -7,6 +7,8 @@ import NextEmploymentPage from "./NextEmploymentPage";
 import AttachmentsPage from "./AttachmentsPage";
 import ReviewSubmitPage from "./ReviewSubmitPage";
 import ThankYouPage from "./ThankYouPage";
+import { submitExitInterview } from "../services/api";
+import type { ExitInterviewPayload } from "../types/ExitInterviewPayload"; 
 
 export type StepKey =
   | "details"
@@ -68,18 +70,18 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
     [files]
   );
 
-  const handleSubmitAll = async () => {
+    const handleSubmitAll = async () => {
     try {
       setIsSubmitting(true);
 
-      // 1) Build request body from wizard state
+      // 1) Build request body from wizard state – matches ExitInterviewPayload
       const body = {
-        // Required-ish fields for your API
-        name: employeeDetails.fullName,
+        // Employee details
+        employeeName: employeeDetails.fullName,
         employeeId: employeeDetails.staffId,
         manager: experienceSummary.managerFeedback || "N/A",
-        position: "N/A", // TODO: replace when you capture this
-        grade: "N/A", // TODO: replace when you capture this
+        position: "N/A", // TODO: capture from form later
+        grade: "N/A",    // TODO: capture from form later
         separationDate: employeeDetails.lastWorkingDay,
         primaryReason: reasonsForLeaving.primaryReason,
         suggestions:
@@ -88,76 +90,65 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
           "No additional suggestions provided",
 
         // Optional profile data
-        email: null,
-        functionName: null,
-        department: employeeDetails.department || null,
-        location: employeeDetails.location || null,
-        lengthOfService: null,
-        age: null,
+        email: undefined, // or a string if you collect it
+        functionName: undefined,
+        department: employeeDetails.department || undefined,
+        location: employeeDetails.location || undefined,
+        lengthOfService: undefined,
+        age: undefined,
 
         // More reasons
-        secondaryReason: reasonsForLeaving.secondaryReason || null,
-        tertiaryReason: reasonsForLeaving.tertiaryReason || null,
-        singleTriggerEvent: reasonsForLeaving.singleTriggerEvent || null,
+        secondaryReason: reasonsForLeaving.secondaryReason || undefined,
+        tertiaryReason: reasonsForLeaving.tertiaryReason || undefined,
+
+        // If there is any trigger-event text, mark the flag true and send explanation;
+        // otherwise leave both undefined.
+        singleTriggerEvent:
+          reasonsForLeaving.singleTriggerEvent.trim() !== ""
+            ? true
+            : undefined,
         singleTriggerExplanation:
-          reasonsForLeaving.singleTriggerExplanation || null,
-        preventable: reasonsForLeaving.preventable || null,
+          reasonsForLeaving.singleTriggerEvent.trim() !== ""
+            ? reasonsForLeaving.singleTriggerExplanation || undefined
+            : undefined,
+
+        // Preventable: treat "Yes"/"No"/"" as boolean or undefined
+        preventable:
+          reasonsForLeaving.preventable === "Yes"
+            ? true
+            : reasonsForLeaving.preventable === "No"
+            ? false
+            : undefined,
         preventableExplanation:
-          reasonsForLeaving.preventableExplanation || null,
+          reasonsForLeaving.preventableExplanation || undefined,
 
         // Recommendation & next employment
         wouldRecommend:
           experienceSummary.positives
-            ? "Yes"
+            ? true
             : experienceSummary.challenges
-            ? "No"
-            : null,
+            ? false
+            : undefined,
 
         acceptedAnotherJob:
           nextEmployment.hasNewJob === true
-            ? "Yes"
+            ? true
             : nextEmployment.hasNewJob === false
-            ? "No"
-            : null,
+            ? false
+            : undefined,
 
-        newEmployer: nextEmployment.newIndustry || null,
-        newJobTitle: null,
-        newJobLocation: null,
-        howFoundJob: null,
-        howLongLooking: null,
-      };
+        newEmployer: nextEmployment.newIndustry || undefined,
+        newJobTitle: undefined,
+        newJobLocation: undefined,
+        howFoundJob: undefined,
+        howLongLooking: undefined,
+      } satisfies ExitInterviewPayload;
 
-      // 2) Send it to your backend (Codespaces URL, change host if needed)
-      const response = await fetch(
-        "https://ideal-space-invention-696ww6xr6grcrv94-8080.app.github.dev/api/exit-interviews",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        }
-      );
-
-      // 3) Handle API response
-      if (!response.ok) {
-        let message = "Error submitting your exit interview.";
-        try {
-          const errJson = await response.json();
-          if (errJson && typeof errJson.error === "string") {
-            message = errJson.error;
-          }
-        } catch {
-          // ignore JSON parse issues
-        }
-        alert(message);
-        return;
-      }
-
-      const result = await response.json();
+      // 2) Send it to your backend via the shared API helper
+      const result = await submitExitInterview(body);
       console.log("Server response:", result);
 
-      // Go to Thank You page when successful
+      // 3) Go to Thank You page when successful
       goToStep("thank-you");
     } catch (error) {
       console.error("Network or other error:", error);
@@ -169,6 +160,7 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
       setIsSubmitting(false);
     }
   };
+
 
   const reasonsForReview = useMemo(
     () => ({
