@@ -7,7 +7,6 @@ import ExitInterviewFlow from "../pages/ExitInterviewFlow";
 import HRDashboardPage from "../pages/hr/HRDashboardPage";
 import HRInterviewListPage from "../pages/hr/HRInterviewListPage";
 import HRInterviewDetailPage from "../pages/hr/HRInterviewDetailPage";
-import ThankYouPage from "../pages/ThankYouPage";
 
 
 /**
