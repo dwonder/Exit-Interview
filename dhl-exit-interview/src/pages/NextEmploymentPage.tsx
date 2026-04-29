@@ -6,6 +6,10 @@ interface NextEmploymentValues {
   hasNewJob: boolean | undefined;
   newIndustry: string;
   stayingInLogistics: boolean | undefined;
+  newEmployer?: string;
+  newJobTitle?: string;
+  howFoundJob?: string;
+  howLongLooking?: string;
 }
 
 interface NextEmploymentPageProps {
@@ -48,22 +52,30 @@ const NextEmploymentPage: React.FC<NextEmploymentPageProps> = ({
       ? "Yes"
       : "No";
 
-  // When user changes the primary question, we also reset newIndustry if answer is not "Yes"
+  // When user changes the primary question, we also reset some dependent fields
   const handleHasNewJobChange = (value: string) => {
     if (value === "") {
       onChange("hasNewJob", undefined);
-      onChange("newIndustry", ""); // clear just in case
+      onChange("newIndustry", "");
+      onChange("newEmployer", "");
+      onChange("newJobTitle", "");
+      onChange("howFoundJob", "");
+      onChange("howLongLooking", "");
     } else if (value === "Yes") {
       onChange("hasNewJob", true);
-      // keep existing newIndustry value
+      // keep existing details
     } else {
       // No
       onChange("hasNewJob", false);
-      onChange("newIndustry", ""); // clear because not applicable
+      onChange("newIndustry", "");
+      onChange("newEmployer", "");
+      onChange("newJobTitle", "");
+      onChange("howFoundJob", "");
+      onChange("howLongLooking", "");
     }
   };
 
-  const showNewIndustry = values.hasNewJob === true;
+  const showNewJobDetails = values.hasNewJob === true;
 
   return (
     <DHLLayout currentStep={currentStep} onStepChange={() => {}}>
@@ -75,6 +87,7 @@ const NextEmploymentPage: React.FC<NextEmploymentPageProps> = ({
         </p>
 
         <form className="dhl-form" onSubmit={handleSubmit}>
+          {/* Have you accepted another job? */}
           <div className="dhl-form__group">
             <label className="dhl-form__label">
               <span className="dhl-form__label-required">*</span>
@@ -92,21 +105,74 @@ const NextEmploymentPage: React.FC<NextEmploymentPageProps> = ({
             </select>
           </div>
 
-          {showNewIndustry && (
-            <div className="dhl-form__group">
-              <label className="dhl-form__label">New industry</label>
-              <input
-                className="dhl-form__control"
-                value={values.newIndustry}
-                onChange={(e) => onChange("newIndustry", e.target.value)}
-                placeholder="e.g. Finance, Technology, Manufacturing"
-              />
-            </div>
+          {/* Only show these if they have a new job */}
+          {showNewJobDetails && (
+            <>
+              {/* New employer */}
+              <div className="dhl-form__group">
+                <label className="dhl-form__label">New employer</label>
+                <input
+                  className="dhl-form__control"
+                  value={values.newEmployer || ""}
+                  onChange={(e) => onChange("newEmployer", e.target.value)}
+                  placeholder="e.g. ABC Logistics Ltd"
+                />
+              </div>
+
+              {/* New job title */}
+              <div className="dhl-form__group">
+                <label className="dhl-form__label">New job title</label>
+                <input
+                  className="dhl-form__control"
+                  value={values.newJobTitle || ""}
+                  onChange={(e) => onChange("newJobTitle", e.target.value)}
+                  placeholder="e.g. Operations Manager"
+                />
+              </div>
+
+              {/* New industry */}
+              <div className="dhl-form__group">
+                <label className="dhl-form__label">New industry</label>
+                <input
+                  className="dhl-form__control"
+                  value={values.newIndustry}
+                  onChange={(e) => onChange("newIndustry", e.target.value)}
+                  placeholder="e.g. Finance, Technology, Manufacturing"
+                />
+              </div>
+
+              {/* How did you find the job? */}
+              <div className="dhl-form__group">
+                <label className="dhl-form__label">
+                  How did you find the job?
+                </label>
+                <input
+                  className="dhl-form__control"
+                  value={values.howFoundJob || ""}
+                  onChange={(e) => onChange("howFoundJob", e.target.value)}
+                  placeholder="e.g. LinkedIn, Referral, Job board"
+                />
+              </div>
+
+              {/* How long have you been looking? */}
+              <div className="dhl-form__group">
+                <label className="dhl-form__label">
+                  How long have you been looking?
+                </label>
+                <input
+                  className="dhl-form__control"
+                  value={values.howLongLooking || ""}
+                  onChange={(e) => onChange("howLongLooking", e.target.value)}
+                  placeholder="e.g. 3 months"
+                />
+              </div>
+            </>
           )}
 
+          {/* Will you remain in logistics business? */}
           <div className="dhl-form__group">
             <label className="dhl-form__label">
-              Will you remain in logistics / express?
+              Will you remain in logistics business?
             </label>
             <select
               className="dhl-form__control"

@@ -1,13 +1,19 @@
+// src/pages/EmployeeDetailsPage.tsx
+import React from "react";
 import DHLLayout from "../components/layout/DHLLayout";
 
 interface EmployeeDetailsValues {
   fullName: string;
   staffId: string;
+  email: string;
+  manager: string;
   department: string;
   location: string;
   lastWorkingDay: string;
-  position: string; // NEW
-  grade: string;    // NEW
+  position: string;
+  grade: string;
+  lengthOfService: string;
+  age: string;
 }
 
 interface EmployeeDetailsPageProps {
@@ -38,6 +44,7 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
         </p>
 
         <form className="dhl-form" onSubmit={handleSubmit}>
+          {/* Full name */}
           <div className="dhl-form__group">
             <label className="dhl-form__label">
               <span className="dhl-form__label-required">*</span>
@@ -52,6 +59,7 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
             />
           </div>
 
+          {/* Staff ID */}
           <div className="dhl-form__group">
             <label className="dhl-form__label">
               <span className="dhl-form__label-required">*</span>
@@ -61,11 +69,35 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               className="dhl-form__control"
               value={values.staffId}
               onChange={(e) => onChange("staffId", e.target.value)}
-              placeholder="e.g. NG12345"
+              placeholder="e.g. GID123456"
               required
             />
           </div>
 
+          {/* Email */}
+          <div className="dhl-form__group">
+            <label className="dhl-form__label">Email</label>
+            <input
+              className="dhl-form__control"
+              type="email"
+              value={values.email}
+              onChange={(e) => onChange("email", e.target.value)}
+              placeholder="e.g. john.doe@dhl.com"
+            />
+          </div>
+
+          {/* Manager (optional; you’re still using managerFeedback in experience page for now) */}
+          <div className="dhl-form__group">
+            <label className="dhl-form__label">Line manager</label>
+            <input
+              className="dhl-form__control"
+              value={values.manager}
+              onChange={(e) => onChange("manager", e.target.value)}
+              placeholder="e.g. Line manager name"
+            />
+          </div>
+
+          {/* Department / Function */}
           <div className="dhl-form__group">
             <label className="dhl-form__label">Department / Function</label>
             <input
@@ -76,6 +108,7 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
             />
           </div>
 
+          {/* Location */}
           <div className="dhl-form__group">
             <label className="dhl-form__label">Location</label>
             <input
@@ -86,11 +119,9 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
             />
           </div>
 
-          {/* NEW: Job title / position */}
+          {/* Job title / position */}
           <div className="dhl-form__group">
-            <label className="dhl-form__label">
-              Job title / position
-            </label>
+            <label className="dhl-form__label">Job title / position</label>
             <input
               className="dhl-form__control"
               value={values.position}
@@ -99,19 +130,43 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
             />
           </div>
 
-          {/* NEW: Grade / band */}
+          {/* Grade / band */}
           <div className="dhl-form__group">
-            <label className="dhl-form__label">
-              Grade / band
-            </label>
+            <label className="dhl-form__label">Grade / band</label>
             <input
               className="dhl-form__control"
               value={values.grade}
               onChange={(e) => onChange("grade", e.target.value)}
-              placeholder="e.g. G3, Officer, Manager"
+              placeholder="e.g. N, L, M"
             />
           </div>
 
+          {/* Length of service */}
+          <div className="dhl-form__group">
+            <label className="dhl-form__label">Length of service</label>
+            <input
+              className="dhl-form__control"
+              value={values.lengthOfService}
+              onChange={(e) => onChange("lengthOfService", e.target.value)}
+              placeholder="e.g. 2 years 6 months"
+            />
+          </div>
+
+          {/* Age */}
+          <div className="dhl-form__group">
+            <label className="dhl-form__label">Age</label>
+            <input
+              className="dhl-form__control"
+              type="number"
+              min={16}
+              max={80}
+              value={values.age}
+              onChange={(e) => onChange("age", e.target.value)}
+              placeholder="e.g. 35"
+            />
+          </div>
+
+          {/* Last working day */}
           <div className="dhl-form__group">
             <label className="dhl-form__label">Last working day</label>
             <input

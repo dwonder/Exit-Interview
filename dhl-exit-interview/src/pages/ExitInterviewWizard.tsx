@@ -30,11 +30,15 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
   const [employeeDetails, setEmployeeDetails] = useState({
     fullName: "",
     staffId: "",
+    email: "",            // NEW
+    manager: "",          // (if you ever want to capture manager here)
     department: "",
     location: "",
     lastWorkingDay: "",
-    position: "", // NEW
-    grade: "", // NEW
+    position: "",         // NEW
+    grade: "",            // NEW
+    lengthOfService: "",  // NEW
+    age: "",              // NEW
   });
 
   const [reasonsForLeaving, setReasonsForLeaving] = useState({
@@ -51,22 +55,31 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
     positives: "",
     challenges: "",
     managerFeedback: "",
+    wouldRecommend: "",   // NEW: "Yes" | "No" | ""
   });
 
   const [nextEmployment, setNextEmployment] = useState<{
     hasNewJob: boolean | undefined;
     newIndustry: string;
     stayingInLogistics: boolean | undefined;
+    newEmployer?: string;     // NEW
+    newJobTitle?: string;     // NEW
+    howFoundJob?: string;     // NEW
+    howLongLooking?: string;  // NEW
   }>({
     hasNewJob: undefined,
     newIndustry: "",
     stayingInLogistics: undefined,
+    newEmployer: "",
+    newJobTitle: "",
+    howFoundJob: "",
+    howLongLooking: "",
   });
 
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // NEW: store referenceId so we can show it on Thank You page
+  // Store referenceId so we can show it on Thank You page
   const [referenceId, setReferenceId] = useState<string | null>(null);
 
   const attachments = useMemo(
@@ -75,109 +88,108 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
   );
 
   const handleSubmitAll = async () => {
-  try {
-    setIsSubmitting(true);
+    try {
+      setIsSubmitting(true);
 
-    // Frontend validation for required fields
-    if (
-      !employeeDetails.fullName.trim() ||
-      !employeeDetails.staffId.trim() ||
-      !employeeDetails.lastWorkingDay.trim() ||
-      !reasonsForLeaving.primaryReason.trim()
-    ) {
+      // Frontend validation for required fields
+      if (
+        !employeeDetails.fullName.trim() ||
+        !employeeDetails.staffId.trim() ||
+        !employeeDetails.lastWorkingDay.trim() ||
+        !reasonsForLeaving.primaryReason.trim()
+      ) {
+        alert(
+          "Please fill in your name, staff ID, last working day and primary reason before submitting."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 1) Build request body from wizard state – matches backend expectations
+      const body = {
+        // Required fields expected by the API
+        name: employeeDetails.fullName,
+        employeeId: employeeDetails.staffId,
+        manager: experienceSummary.managerFeedback || "N/A",
+        position: employeeDetails.position || "N/A",
+        grade: employeeDetails.grade || "N/A",
+        separationDate: employeeDetails.lastWorkingDay,
+        primaryReason: reasonsForLeaving.primaryReason,
+        suggestions:
+          experienceSummary.challenges ||
+          experienceSummary.positives ||
+          "No additional suggestions provided",
+
+        // Optional profile data
+        email: employeeDetails.email || undefined,
+        functionName: undefined,
+        department: employeeDetails.department || undefined,
+        location: employeeDetails.location || undefined,
+        lengthOfService: employeeDetails.lengthOfService || undefined,
+        age: employeeDetails.age || undefined,
+
+        // More reasons
+        secondaryReason: reasonsForLeaving.secondaryReason || undefined,
+        tertiaryReason: reasonsForLeaving.tertiaryReason || undefined,
+
+        // Backend expects "Yes"/"No"/undefined strings for these flags
+        singleTriggerEvent:
+          reasonsForLeaving.singleTriggerEvent.trim() !== "" ? "Yes" : undefined,
+        singleTriggerExplanation:
+          reasonsForLeaving.singleTriggerEvent.trim() !== ""
+            ? reasonsForLeaving.singleTriggerExplanation || undefined
+            : undefined,
+
+        preventable:
+          reasonsForLeaving.preventable === "Yes"
+            ? "Yes"
+            : reasonsForLeaving.preventable === "No"
+            ? "No"
+            : undefined,
+        preventableExplanation:
+          reasonsForLeaving.preventableExplanation || undefined,
+
+        wouldRecommend:
+          experienceSummary.wouldRecommend === "Yes"
+            ? "Yes"
+            : experienceSummary.wouldRecommend === "No"
+            ? "No"
+            : undefined,
+
+        acceptedAnotherJob:
+          nextEmployment.hasNewJob === true
+            ? "Yes"
+            : nextEmployment.hasNewJob === false
+            ? "No"
+            : undefined,
+
+        newEmployer: nextEmployment.newEmployer || undefined,
+        newJobTitle: nextEmployment.newJobTitle || undefined,
+        newJobLocation: undefined,
+        howFoundJob: nextEmployment.howFoundJob || undefined,
+        howLongLooking: nextEmployment.howLongLooking || undefined,
+      };
+
+      const result = await submitExitInterview(body);
+      console.log("Server response:", result);
+
+      if (result && result.referenceId) {
+        setReferenceId(result.referenceId);
+      } else {
+        setReferenceId(null);
+      }
+
+      goToStep("thank-you");
+    } catch (error) {
+      console.error("Network or other error:", error);
       alert(
-        "Please fill in your name, staff ID, last working day and primary reason before submitting."
+        "We could not submit your exit interview due to a technical issue. " +
+          "Please try again or contact HR if it continues."
       );
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    // 1) Build request body from wizard state – matches backend expectations
-    const body = {
-      // Required fields expected by the API
-      name: employeeDetails.fullName,
-      employeeId: employeeDetails.staffId,
-      manager: experienceSummary.managerFeedback || "N/A",
-      position: employeeDetails.position || "N/A",
-      grade: employeeDetails.grade || "N/A",
-      separationDate: employeeDetails.lastWorkingDay,
-      primaryReason: reasonsForLeaving.primaryReason,
-      suggestions:
-        experienceSummary.challenges ||
-        experienceSummary.positives ||
-        "No additional suggestions provided",
-
-      // Optional profile data
-      email: undefined,
-      functionName: undefined,
-      department: employeeDetails.department || undefined,
-      location: employeeDetails.location || undefined,
-      lengthOfService: undefined,
-      age: undefined,
-
-      // More reasons
-      secondaryReason: reasonsForLeaving.secondaryReason || undefined,
-      tertiaryReason: reasonsForLeaving.tertiaryReason || undefined,
-
-      // Backend expects "Yes"/"No"/undefined strings for these flags
-      singleTriggerEvent:
-        reasonsForLeaving.singleTriggerEvent.trim() !== "" ? "Yes" : undefined,
-      singleTriggerExplanation:
-        reasonsForLeaving.singleTriggerEvent.trim() !== ""
-          ? reasonsForLeaving.singleTriggerExplanation || undefined
-          : undefined,
-
-      preventable:
-        reasonsForLeaving.preventable === "Yes"
-          ? "Yes"
-          : reasonsForLeaving.preventable === "No"
-          ? "No"
-          : undefined,
-      preventableExplanation:
-        reasonsForLeaving.preventableExplanation || undefined,
-
-      wouldRecommend:
-        experienceSummary.positives
-          ? "Yes"
-          : experienceSummary.challenges
-          ? "No"
-          : undefined,
-
-      acceptedAnotherJob:
-        nextEmployment.hasNewJob === true
-          ? "Yes"
-          : nextEmployment.hasNewJob === false
-          ? "No"
-          : undefined,
-
-      newEmployer: nextEmployment.newIndustry || undefined,
-      newJobTitle: undefined,
-      newJobLocation: undefined,
-      howFoundJob: undefined,
-      howLongLooking: undefined,
-    };
-
-    const result = await submitExitInterview(body);
-    console.log("Server response:", result);
-
-    if (result && result.referenceId) {
-      setReferenceId(result.referenceId);
-    } else {
-      setReferenceId(null);
-    }
-
-    goToStep("thank-you");
-  } catch (error) {
-    console.error("Network or other error:", error);
-    alert(
-      "We could not submit your exit interview due to a technical issue. " +
-        "Please try again or contact HR if it continues."
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  };
 
   const reasonsForReview = useMemo(
     () => ({
@@ -287,7 +299,6 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
       );
 
     case "thank-you":
-      // NEW: pass referenceId into ThankYouPage
       return <ThankYouPage referenceId={referenceId} />;
 
     default:
