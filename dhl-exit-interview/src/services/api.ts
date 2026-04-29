@@ -1,4 +1,4 @@
-import type { ExitInterviewPayload } from "../types/ExitInterviewPayload";
+
 
 // Temporary: use Azure API directly in production, /api for local dev.
 // You can later revert to VITE_API_BASE_URL once env wiring is stable.
@@ -8,7 +8,7 @@ const BASE_URL =
     : "/api";
 
 export async function submitExitInterview(
-  data: ExitInterviewPayload
+  data: any
 ): Promise<{ id: string; referenceId: string }> {
   console.log("Submitting to:", `${BASE_URL}/exit-interviews`);
   console.log("Payload:", data);

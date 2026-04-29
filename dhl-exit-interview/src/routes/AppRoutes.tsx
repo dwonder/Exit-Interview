@@ -25,7 +25,7 @@ export const AppRoutes: React.FC = () => {
       {/* Full exit interview wizard */}
       <Route path="/exit-interview/*" element={<ExitInterviewFlow />} />
   {/* Thank you after submission */}
-      <Route path="/exit-interview/thank-you" element={<ThankYouPage />} />
+  
 
 
       {/* HR flow */}

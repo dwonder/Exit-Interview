@@ -6,6 +6,8 @@ interface EmployeeDetailsValues {
   department: string;
   location: string;
   lastWorkingDay: string;
+  position: string; // NEW
+  grade: string;    // NEW
 }
 
 interface EmployeeDetailsPageProps {
@@ -81,6 +83,32 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               value={values.location}
               onChange={(e) => onChange("location", e.target.value)}
               placeholder="e.g. Lagos, Abuja"
+            />
+          </div>
+
+          {/* NEW: Job title / position */}
+          <div className="dhl-form__group">
+            <label className="dhl-form__label">
+              Job title / position
+            </label>
+            <input
+              className="dhl-form__control"
+              value={values.position}
+              onChange={(e) => onChange("position", e.target.value)}
+              placeholder="e.g. Operations Supervisor"
+            />
+          </div>
+
+          {/* NEW: Grade / band */}
+          <div className="dhl-form__group">
+            <label className="dhl-form__label">
+              Grade / band
+            </label>
+            <input
+              className="dhl-form__control"
+              value={values.grade}
+              onChange={(e) => onChange("grade", e.target.value)}
+              placeholder="e.g. G3, Officer, Manager"
             />
           </div>
 
