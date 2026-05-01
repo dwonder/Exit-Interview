@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DHLLayout from "../../components/layout/DHLLayout";
 import HRNav from "../../components/hr/HRNav";
@@ -37,21 +37,8 @@ const HRInterviewListPage: React.FC = () => {
     alert("Export to PDF is not wired yet – connect this to your backend.");
   };
 
-  // Simple summary metrics for strip
+  // We only know for sure we have a total count, so keep the summary simple
   const totalInterviews = items.length;
-  const recommendYesCount = useMemo(
-    () => items.filter((i) => i.WouldRecommend === true).length,
-    [items]
-  );
-  const recommendRate =
-    totalInterviews > 0
-      ? Math.round((recommendYesCount / totalInterviews) * 100)
-      : 0;
-
-  const withNewJobCount = useMemo(
-    () => items.filter((i) => i.AcceptedAnotherJob === true).length,
-    [items]
-  );
 
   return (
     <DHLLayout
@@ -65,23 +52,11 @@ const HRInterviewListPage: React.FC = () => {
         <p>View and export completed exit interviews.</p>
       </div>
 
-      {/* Summary strip */}
+      {/* Summary strip – now just shows total interviews */}
       <section className="hr-exit-summary-strip">
         <div className="hr-exit-summary-item">
           <span className="hr-exit-summary-label">Total interviews</span>
           <span className="hr-exit-summary-value">{totalInterviews}</span>
-        </div>
-        <div className="hr-exit-summary-item">
-          <span className="hr-exit-summary-label">
-            Would recommend DHL (overall)
-          </span>
-          <span className="hr-exit-summary-value">{recommendRate}%</span>
-        </div>
-        <div className="hr-exit-summary-item">
-          <span className="hr-exit-summary-label">
-            Accepted another job
-          </span>
-          <span className="hr-exit-summary-value">{withNewJobCount}</span>
         </div>
       </section>
 
