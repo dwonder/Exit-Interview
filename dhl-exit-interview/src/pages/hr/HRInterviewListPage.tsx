@@ -1,10 +1,34 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DHLLayout from "../../components/layout/DHLLayout";
-import { mockInterviews, type ExitInterviewRecord } from "../../services/hrMockData";
+import HRNav from "../../components/hr/HRNav";
 import "../../App.css";
 
+import { fetchHrExitInterviews } from "../../services/hrApi";
+import type { HrExitInterviewListItem } from "../../types/hr";
+
 const HRInterviewListPage: React.FC = () => {
+  const [items, setItems] = useState<HrExitInterviewListItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await fetchHrExitInterviews();
+        setItems(result.items);
+      } catch (e: any) {
+        setError(e.message ?? "Unable to load data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
   const handleExportExcel = () => {
     alert("Export to Excel is not wired yet – connect this to your backend.");
   };
@@ -13,29 +37,80 @@ const HRInterviewListPage: React.FC = () => {
     alert("Export to PDF is not wired yet – connect this to your backend.");
   };
 
-  const items: ExitInterviewRecord[] = mockInterviews;
+  // Simple summary metrics for strip
+  const totalInterviews = items.length;
+  const recommendYesCount = useMemo(
+    () => items.filter((i) => i.WouldRecommend === true).length,
+    [items]
+  );
+  const recommendRate =
+    totalInterviews > 0
+      ? Math.round((recommendYesCount / totalInterviews) * 100)
+      : 0;
+
+  const withNewJobCount = useMemo(
+    () => items.filter((i) => i.AcceptedAnotherJob === true).length,
+    [items]
+  );
 
   return (
-    <DHLLayout>
-      <div className="hr-page-header">
-        <h2>Exit Interview Records</h2>
+    <DHLLayout
+      heroTitle="Exit Interview Records"
+      heroSubtitle="Completed exit interviews submitted via the DHL Nigeria exit interview form."
+    >
+      <HRNav />
+
+      <div className="hr-exit-header">
+        <h2>Exit interview records</h2>
         <p>View and export completed exit interviews.</p>
       </div>
 
-      <div className="hr-actions-row">
-        <button
-          className="dhl-btn dhl-btn-secondary"
-          onClick={handleExportExcel}
-        >
-          Export list to Excel
-        </button>
-        <button className="dhl-btn dhl-btn-secondary" onClick={handleExportPdf}>
-          Export list to PDF
-        </button>
+      {/* Summary strip */}
+      <section className="hr-exit-summary-strip">
+        <div className="hr-exit-summary-item">
+          <span className="hr-exit-summary-label">Total interviews</span>
+          <span className="hr-exit-summary-value">{totalInterviews}</span>
+        </div>
+        <div className="hr-exit-summary-item">
+          <span className="hr-exit-summary-label">
+            Would recommend DHL (overall)
+          </span>
+          <span className="hr-exit-summary-value">{recommendRate}%</span>
+        </div>
+        <div className="hr-exit-summary-item">
+          <span className="hr-exit-summary-label">
+            Accepted another job
+          </span>
+          <span className="hr-exit-summary-value">{withNewJobCount}</span>
+        </div>
+      </section>
+
+      {/* Actions */}
+      <div className="hr-actions-row hr-exit-actions-row">
+        <span className="hr-exit-actions-label">
+          Export the full list for further analysis or reporting.
+        </span>
+        <div className="hr-actions-right">
+          <button
+            className="dhl-btn dhl-btn-secondary"
+            onClick={handleExportExcel}
+          >
+            Export list to Excel
+          </button>
+          <button
+            className="dhl-btn dhl-btn-secondary"
+            onClick={handleExportPdf}
+          >
+            Export list to PDF
+          </button>
+        </div>
       </div>
 
-      <div className="hr-table-wrapper">
-        <table className="hr-table">
+      {loading && <p>Loading exit interviews...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <div className="hr-table-wrapper hr-exit-table-wrapper">
+        <table className="hr-table hr-exit-table">
           <thead>
             <tr>
               <th>Employee</th>
@@ -47,33 +122,31 @@ const HRInterviewListPage: React.FC = () => {
               <th>Location</th>
               <th>Separation date</th>
               <th>Primary reason</th>
-              <th>Sentiment</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {items.map(rec => (
-              <tr key={rec.id}>
-                <td>{rec.employeeName}</td>
-                <td>{rec.employeeId}</td>
-                <td>{rec.department}</td>
-                <td>{rec.functionName}</td>
-                <td>{rec.grade}</td>
-                <td>{rec.manager}</td>
-                <td>{rec.location}</td>
-                <td>{rec.separationDate}</td>
-                <td>{rec.primaryReason}</td>
-                <td>{rec.overallSentiment ?? "N/A"}</td>
+            {items.map((rec) => (
+              <tr key={rec.Id}>
+                <td>{rec.EmployeeName}</td>
+                <td>{rec.EmployeeId}</td>
+                <td>{rec.Department ?? ""}</td>
+                <td>{rec.FunctionName ?? ""}</td>
+                <td>{rec.Grade ?? ""}</td>
+                <td>{rec.Manager ?? ""}</td>
+                <td>{rec.Location ?? ""}</td>
+                <td>{rec.SeparationDate ?? ""}</td>
+                <td>{rec.PrimaryReason ?? ""}</td>
                 <td>
-                  <Link to={`/hr/interviews/${rec.id}`} className="hr-link">
+                  <Link to={`/hr/interviews/${rec.Id}`} className="hr-link">
                     View
                   </Link>
                 </td>
               </tr>
             ))}
-            {items.length === 0 && (
+            {items.length === 0 && !loading && !error && (
               <tr>
-                <td colSpan={11}>No exit interviews found.</td>
+                <td colSpan={10}>No exit interviews found.</td>
               </tr>
             )}
           </tbody>

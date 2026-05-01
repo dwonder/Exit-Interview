@@ -7,12 +7,18 @@ export interface DHLLayoutProps {
   children: React.ReactNode;
   currentStep?: StepKey | string; // now optional
   onStepChange?: (stepKey: StepKey) => void;
+
+  // NEW: allow callers (e.g. HR pages) to override the hero text
+  heroTitle?: string;
+  heroSubtitle?: string;
 }
 
 const DHLLayout: React.FC<DHLLayoutProps> = ({
   children,
   currentStep,
   onStepChange,
+  heroTitle,
+  heroSubtitle,
 }) => {
   return (
     <div className="dhl-root">
@@ -51,11 +57,12 @@ const DHLLayout: React.FC<DHLLayoutProps> = ({
               <div className="dhl-card__hero">
                 <div className="dhl-card__hero-graphic" aria-hidden="true" />
                 <div className="dhl-card__hero-text">
-                  <h1 className="dhl-card__hero-title">Exit Interview Form</h1>
+                  <h1 className="dhl-card__hero-title">
+                    {heroTitle ?? "Exit Interview Form"}
+                  </h1>
                   <p className="dhl-card__hero-subtitle">
-                    Please answer the questions as honestly as you feel
-                    comfortable. Your feedback supports positive change within
-                    DHL Express Nigeria.
+                    {heroSubtitle ??
+                      "Please answer the questions as honestly as you feel comfortable. Your feedback supports positive change within DHL Express Nigeria."}
                   </p>
                 </div>
               </div>
@@ -68,7 +75,8 @@ const DHLLayout: React.FC<DHLLayoutProps> = ({
 
       <footer className="dhl-footer">
         <span className="dhl-footer__text">
-          © {new Date().getFullYear()} DHL Express Nigeria. All rights reserved.
+          © {new Date().getFullYear()} DHL Express Nigeria. All rights
+          reserved.
         </span>
       </footer>
     </div>

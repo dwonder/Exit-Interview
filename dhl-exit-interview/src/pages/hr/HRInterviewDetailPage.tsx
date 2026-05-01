@@ -1,8 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import DHLLayout from "../../components/layout/DHLLayout";
-import { mockInterviews, type ExitInterviewRecord } from "../../services/hrMockData";
+import HRNav from "../../components/hr/HRNav";
 import "../../App.css";
+
+import { fetchHrExitInterviewDetail } from "../../services/hrApi";
+import type { HrExitInterviewDetail } from "../../types/hr";
 
 type AISummary = {
   mainReasons: string[];
@@ -15,47 +18,105 @@ type AISummary = {
 const HRInterviewDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const [record, setRecord] = useState<HrExitInterviewDetail | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
   const [loadingAI, setLoadingAI] = useState(false);
 
-  const record: ExitInterviewRecord | undefined = useMemo(
-    () => mockInterviews.find(r => r.id === id),
-    [id]
-  );
+  useEffect(() => {
+    if (!id) return;
+    const numericId = Number(id);
+    if (Number.isNaN(numericId)) {
+      setError("Invalid interview id");
+      return;
+    }
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchHrExitInterviewDetail(numericId);
+        setRecord(data);
+      } catch (e: any) {
+        setError(e.message ?? "Unable to load interview");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <DHLLayout
+        heroTitle="Exit Interview Detail"
+        heroSubtitle="Loading interview..."
+      >
+        <HRNav />
+        <p>Loading interview...</p>
+      </DHLLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DHLLayout
+        heroTitle="Exit Interview Detail"
+        heroSubtitle="Unable to load this interview record."
+      >
+        <HRNav />
+        <p style={{ color: "red" }}>{error}</p>
+        <button
+          className="dhl-btn dhl-btn-secondary"
+          onClick={() => navigate("/hr/interviews")}
+        >
+          Back to list
+        </button>
+      </DHLLayout>
+    );
+  }
 
   if (!record) {
     return (
-      <DHLLayout>
+      <DHLLayout
+        heroTitle="Exit Interview Detail"
+        heroSubtitle="This interview record could not be found."
+      >
+        <HRNav />
         <p>Interview not found.</p>
         <button
           className="dhl-btn dhl-btn-secondary"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/hr/interviews")}
         >
-          Back
+          Back to list
         </button>
       </DHLLayout>
     );
   }
 
   const handleGenerateAI = async () => {
-    // TODO: Replace this mock with a real AI backend call using role="hr"
+    // Still mock AI for now – later we connect to POST /api/hr/exit-interviews/:id/ai-analyse
     setLoadingAI(true);
     try {
-      await new Promise(res => setTimeout(res, 600)); // fake delay
+      await new Promise((res) => setTimeout(res, 600)); // fake delay
 
       const summary: AISummary = {
-        mainReasons: [record.primaryReason],
+        mainReasons: [record.PrimaryReason ?? "Not stated"],
         positives:
-          record.wouldRecommend === "Yes"
+          record.WouldRecommend === true
             ? ["Employee would recommend DHL as an employer of choice."]
             : [],
         painPoints:
-          record.primaryReason === "Compensation and benefits"
+          record.PrimaryReason === "Compensation and benefits"
             ? ["Concerns about competitiveness of pay and benefits."]
             : [],
-        suggestions: [record.suggestions],
+        suggestions: record.Suggestions ? [record.Suggestions] : [],
         riskNotes:
-          record.wouldRecommend === "No"
+          record.WouldRecommend === false
             ? "Potential risk of negative word-of-mouth. Consider a follow-up conversation if appropriate."
             : undefined,
       };
@@ -75,9 +136,14 @@ const HRInterviewDetailPage: React.FC = () => {
   };
 
   return (
-    <DHLLayout>
+    <DHLLayout
+      heroTitle="Exit Interview Detail"
+      heroSubtitle="Individual employee responses to support HR follow-up and insights."
+    >
+      <HRNav />
+
       <div className="hr-page-header">
-        <h2>Exit Interview – {record.employeeName}</h2>
+        <h2>Exit Interview – {record.EmployeeName}</h2>
         <p>
           Detailed view of the employee&apos;s responses. Use the AI summary to
           support calibration and follow-up discussions.
@@ -119,28 +185,29 @@ const HRInterviewDetailPage: React.FC = () => {
         <h3>Employee & Role</h3>
         <ul>
           <li>
-            <strong>Name:</strong> {record.employeeName}
+            <strong>Name:</strong> {record.EmployeeName}
           </li>
           <li>
-            <strong>Employee ID:</strong> {record.employeeId}
+            <strong>Employee ID:</strong> {record.EmployeeId}
           </li>
           <li>
-            <strong>Function:</strong> {record.functionName}
+            <strong>Function:</strong> {record.FunctionName ?? "Not stated"}
           </li>
           <li>
-            <strong>Department:</strong> {record.department}
+            <strong>Department:</strong> {record.Department ?? "Not stated"}
           </li>
           <li>
-            <strong>Grade:</strong> {record.grade}
+            <strong>Grade:</strong> {record.Grade ?? "Not stated"}
           </li>
           <li>
-            <strong>Manager:</strong> {record.manager}
+            <strong>Manager:</strong> {record.Manager ?? "Not stated"}
           </li>
           <li>
-            <strong>Location:</strong> {record.location}
+            <strong>Location:</strong> {record.Location ?? "Not stated"}
           </li>
           <li>
-            <strong>Separation date:</strong> {record.separationDate}
+            <strong>Separation date:</strong>{" "}
+            {record.SeparationDate ?? "Not stated"}
           </li>
         </ul>
       </div>
@@ -149,31 +216,37 @@ const HRInterviewDetailPage: React.FC = () => {
         <h3>Key Responses</h3>
         <ul>
           <li>
-            <strong>Primary reason for leaving:</strong> {record.primaryReason}
+            <strong>Primary reason for leaving:</strong>{" "}
+            {record.PrimaryReason ?? "Not stated"}
           </li>
           <li>
             <strong>Accepted another job:</strong>{" "}
-            {record.acceptedAnotherJob ? "Yes" : "No"}
+            {record.AcceptedAnotherJob === true
+              ? "Yes"
+              : record.AcceptedAnotherJob === false
+              ? "No"
+              : "Not stated"}
           </li>
-          {record.acceptedAnotherJob && (
+          {record.AcceptedAnotherJob && (
             <li>
-              <strong>New employer:</strong> {record.newEmployer ?? "Not stated"}
+              <strong>New employer:</strong>{" "}
+              {record.NewEmployer ?? "Not stated"}
             </li>
           )}
           <li>
             <strong>Would recommend DHL as an employer of choice:</strong>{" "}
-            {record.wouldRecommend || "Not stated"}
-          </li>
-          <li>
-            <strong>Overall sentiment (if available):</strong>{" "}
-            {record.overallSentiment ?? "Not scored"}
+            {record.WouldRecommend === true
+              ? "Yes"
+              : record.WouldRecommend === false
+              ? "No"
+              : "Not stated"}
           </li>
         </ul>
       </div>
 
       <div className="review-section">
         <h3>Suggestions / Comments</h3>
-        <p>{record.suggestions}</p>
+        <p>{record.Suggestions ?? "No suggestions captured."}</p>
       </div>
 
       <div className="review-section">
