@@ -32,6 +32,7 @@
   flex: 1;
   padding: 2rem 3rem;
   overflow-y: auto;
+  overflow-x: hidden;
   background: linear-gradient(
     to right,
     #ffcc00 0%,
@@ -41,12 +42,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 0;
 }
 
 /* Content container inside main */
 .dhl-main-inner {
   width: 100%;
   max-width: 1100px;
+  min-width: 0;
 }
 
 /* Top bar */
@@ -119,6 +122,7 @@
   display: flex;
   flex-direction: column;
   margin-bottom: 1rem;
+  min-width: 0;
 }
 
 .field-label {
@@ -144,6 +148,13 @@
   border: 1px solid #e0a800;
   padding: 0.45rem 0.6rem;
   font-size: 0.95rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.field-group textarea {
+  resize: vertical;
 }
 
 /* Stepper navigation */
@@ -152,6 +163,7 @@
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 1.25rem;
+  flex-wrap: wrap;
 }
 
 /* Welcome page */
@@ -179,6 +191,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1rem 1.5rem;
+  min-width: 0;
 }
 
 .error-text {
@@ -191,10 +204,12 @@
 .attachment-input-row {
   display: flex;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .attachment-input-row input {
   flex: 1;
+  min-width: 0;
 }
 
 .attachment-list ul {
@@ -229,12 +244,17 @@
   margin-bottom: 1rem;
 }
 
-.hr-table-wrapper {
+.hr-table-wrapper,
+.hr-exit-table-wrapper {
   margin-top: 1rem;
   background: #ffffff;
   border-radius: 6px;
   padding: 0.75rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ----------- RESPONSIVE BREAKPOINTS ----------- */
@@ -266,7 +286,7 @@
   }
 
   .dhl-side-panel {
-    display: none; /* hide courier image on small screens */
+    display: none;
   }
 
   .dhl-layout-main {
@@ -301,7 +321,7 @@
   }
 
   .two-column-grid {
-    grid-template-columns: 1fr; /* stack fields in one column */
+    grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 
@@ -310,7 +330,7 @@
   }
 
   .dhl-btn {
-    width: 48%;      /* 2 buttons side by side */
+    width: 48%;
     text-align: center;
   }
 
@@ -318,12 +338,13 @@
     padding: 0.75rem;
   }
 
-  .hr-table-wrapper {
+  .hr-table-wrapper,
+  .hr-exit-table-wrapper {
     padding: 0.5rem;
-    overflow-x: auto; /* horizontal scroll for wide HR tables */
   }
 
-  .hr-table {
+  .hr-table,
+  .hr-exit-table {
     min-width: 700px;
   }
 }
@@ -331,11 +352,11 @@
 /* Very small phones */
 @media (max-width: 480px) {
   .dhl-topbar-right {
-    display: none; /* hide name/email/avatar to save space */
+    display: none;
   }
 
   .dhl-btn {
-    width: 100%; /* buttons full-width on tiny screens */
+    width: 100%;
   }
 
   .welcome-container {
@@ -357,6 +378,7 @@
   gap: 0.75rem;
   padding: 0;
   margin: 0 0 0.5rem 0;
+  flex-wrap: wrap;
 }
 
 .hr-nav-link {
@@ -396,7 +418,6 @@
 }
 
 /* HR filter bar & stats */
-
 .hr-filterbar {
   display: flex;
   flex-wrap: wrap;
@@ -426,7 +447,6 @@
 }
 
 /* HR stats cards */
-
 .hr-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -454,17 +474,6 @@
   font-weight: 600;
   color: #222;
 }
-
-/* HR list table wrapper – you already had a base version, extending it slightly */
-
-.hr-table-wrapper {
-  margin-top: 1rem;
-  background: #ffffff;
-  border-radius: 6px;
-  padding: 0.75rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-
 
 /* ================= ENHANCED HR DASHBOARD VISUALS ================ */
 
@@ -500,7 +509,6 @@
 }
 
 /* ---- Top KPI cards with DHL accents ---- */
-
 .hr-stat-card {
   position: relative;
   overflow: hidden;
@@ -601,7 +609,6 @@
 }
 
 /* ---- Analytics cards layout & titles ---- */
-
 .hr-analytics-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.2fr);
@@ -617,6 +624,7 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .hr-analytics-card h3 {
@@ -633,7 +641,6 @@
 }
 
 /* ---- Analytics list rows (striped + bar) ---- */
-
 .hr-analytics-list {
   list-style: none;
   padding: 0;
@@ -730,7 +737,6 @@
   }
 }
 
-
 /* Highlights strip above KPI cards */
 .hr-highlights-strip {
   display: flex;
@@ -776,32 +782,49 @@
   }
 }
 
-
 /* Optional: base table styling for HR tables if not defined elsewhere */
-.hr-table {
+.hr-table,
+.hr-exit-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  table-layout: fixed;
+  min-width: 900px;
 }
 
 .hr-table th,
-.hr-table td {
+.hr-table td,
+.hr-exit-table th,
+.hr-exit-table td {
   padding: 0.45rem 0.6rem;
   border-bottom: 1px solid #f0f0f0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  vertical-align: top;
 }
 
-.hr-table th {
+.hr-table th,
+.hr-exit-table th {
   text-align: left;
   font-weight: 600;
   color: #555;
 }
 
-.hr-table tbody tr:hover {
+.hr-table tbody tr:hover,
+.hr-exit-table tbody tr:hover {
   background-color: #fffbea;
 }
 
-/* HR actions row (buttons on list/detail) */
+/* Narrower columns for common short fields */
+.hr-exit-table td:nth-child(6),
+.hr-exit-table th:nth-child(6),
+.hr-exit-table td:nth-child(7),
+.hr-exit-table th:nth-child(7) {
+  max-width: 160px;
+}
 
+/* HR actions row (buttons on list/detail) */
 .hr-actions-row {
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
@@ -809,11 +832,13 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .hr-actions-right {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 /* HR AI summary box */
@@ -857,5 +882,115 @@
 
   .hr-actions-right .dhl-btn {
     flex: 1 1 48%;
+  }
+}
+
+/* ===== Exit interview list & detail visual refinements ===== */
+.hr-exit-header {
+  margin-bottom: 1rem;
+}
+
+.hr-exit-header h2 {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #d40511;
+}
+
+.hr-exit-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Summary strip (used on list + detail) */
+.hr-exit-summary-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  background: #fff9e6;
+  border: 1px solid #ffe39b;
+}
+
+.hr-exit-summary-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hr-exit-summary-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b37b00;
+}
+
+.hr-exit-summary-value {
+  margin-top: 0.15rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #6b4b00;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Actions row tweaks for list page */
+.hr-exit-actions-row {
+  align-items: center;
+}
+
+.hr-exit-actions-label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Table look specifically for exit list */
+.hr-exit-table-wrapper {
+  margin-top: 0.6rem;
+}
+
+.hr-exit-table {
+  font-size: 0.88rem;
+}
+
+/* Mobile table scroll hint */
+.hr-table-scroll-hint {
+  display: none;
+  color: #aa851a;
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 768px) {
+  .hr-exit-summary-strip {
+    padding: 0.55rem 0.75rem;
+  }
+
+  .hr-exit-summary-value {
+    font-size: 0.8rem;
+  }
+
+  .hr-exit-actions-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hr-exit-actions-row .hr-actions-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .hr-exit-actions-row .dhl-btn {
+    flex: 1 1 48%;
+  }
+
+  .hr-table-scroll-hint {
+    display: block;
   }
 }

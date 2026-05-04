@@ -27,6 +27,41 @@ type ExitsByFunctionItem = {
   count: number;
 };
 
+const DEPARTMENT_OPTIONS = [
+  "HR",
+  "IT",
+  "Customer service",
+  "Operations",
+  "Commercial",
+  "General management",
+  "Finance",
+] as const;
+
+const normalizeDepartment = (value?: string | null): string => {
+  const normalized = (value || "").trim().toLowerCase();
+
+  switch (normalized) {
+    case "hr":
+      return "HR";
+    case "it":
+      return "IT";
+    case "customer service":
+    case "customer services":
+    case "customer-service":
+      return "Customer service";
+    case "operations":
+      return "Operations";
+    case "commercial":
+      return "Commercial";
+    case "general management":
+      return "General management";
+    case "finance":
+      return "Finance";
+    default:
+      return value?.trim() || "";
+  }
+};
+
 const HRDashboardPage: React.FC = () => {
   const [allExits, setAllExits] = useState<HrExitInterviewListItem[]>([]);
   const [summary, setSummary] = useState<HrSummaryMetrics | null>(null);
@@ -41,7 +76,6 @@ const HRDashboardPage: React.FC = () => {
   const [department, setDepartment] = useState<string>("all");
   const [func, setFunc] = useState<string>("all");
 
-  // Helper to call list with period
   const loadListWithPeriod = async (p: PeriodFilter) => {
     const result = await fetchHrExitInterviews(p);
     return result.items || [];
@@ -53,21 +87,16 @@ const HRDashboardPage: React.FC = () => {
         setIsLoading(true);
         setLoadError(null);
 
-        // 1) Exit interview list (for filters + reasons) with period
         const list = await loadListWithPeriod(period);
         setAllExits(list);
 
-        // 2) Summary metrics for this period
-        const metricsRes = await fetch(
-          `/api/hr/metrics/summary?period=${period}`
-        );
+        const metricsRes = await fetch(`/api/hr/metrics/summary?period=${period}`);
         if (!metricsRes.ok) {
           throw new Error("Unable to load summary metrics");
         }
         const metricsData: HrSummaryMetrics = await metricsRes.json();
         setSummary(metricsData);
 
-        // 3) Exits by function for this period
         const byFuncRes = await fetch(
           `/api/hr/metrics/exits-by-function?period=${period}`
         );
@@ -87,22 +116,7 @@ const HRDashboardPage: React.FC = () => {
     load();
   }, [period]);
 
-  // Filtered exits (department/function) – period already handled by API
-  const filteredExits = useMemo(() => {
-    return allExits.filter((e) => {
-      const depMatch = department === "all" || e.Department === department;
-      const funcMatch = func === "all" || e.FunctionName === func;
-      return depMatch && funcMatch;
-    });
-  }, [allExits, department, func]);
-
-  const departmentOptions = useMemo(() => {
-    const set = new Set<string>();
-    allExits.forEach((e) => {
-      if (e.Department) set.add(e.Department);
-    });
-    return Array.from(set).sort();
-  }, [allExits]);
+  const departmentOptions = DEPARTMENT_OPTIONS;
 
   const functionOptions = useMemo(() => {
     const set = new Set<string>();
@@ -112,14 +126,35 @@ const HRDashboardPage: React.FC = () => {
     return Array.from(set).sort();
   }, [allExits]);
 
+  useEffect(() => {
+    if (
+      department !== "all" &&
+      !departmentOptions.includes(department as (typeof DEPARTMENT_OPTIONS)[number])
+    ) {
+      setDepartment("all");
+    }
+  }, [department, departmentOptions]);
+
+  const filteredExits = useMemo(() => {
+    return allExits.filter((e) => {
+      const normalizedDepartment = normalizeDepartment(e.Department);
+      const depMatch =
+        department === "all" || normalizedDepartment === department;
+      const funcMatch = func === "all" || e.FunctionName === func;
+      return depMatch && funcMatch;
+    });
+  }, [allExits, department, func]);
+
   const totalExitsFiltered = filteredExits.length;
 
   const exitsPerDepartment = useMemo(() => {
     const map = new Map<string, number>();
+
     filteredExits.forEach((e) => {
-      const key = e.Department || "Not specified";
+      const key = normalizeDepartment(e.Department) || "Not specified";
       map.set(key, (map.get(key) || 0) + 1);
     });
+
     return Array.from(map.entries())
       .map(([deptName, count]) => ({ deptName, count }))
       .sort((a, b) => b.count - a.count);
@@ -135,7 +170,7 @@ const HRDashboardPage: React.FC = () => {
       .map(([reason, count]) => ({ reason, count }))
       .sort((a, b) => b.count - a.count);
   }, [filteredExits]);
-  // Max values for proportional bars in analytics lists
+
   const maxExitsByFunctionCount = useMemo(
     () =>
       exitsByFunction.length
@@ -159,7 +194,7 @@ const HRDashboardPage: React.FC = () => {
         : 1,
     [exitsByPrimaryReason]
   );
-  // Highlights for the strip at the top
+
   const topFunctionByExits = useMemo(() => {
     if (!exitsByFunction.length) return null;
     return exitsByFunction[0].FunctionName;
@@ -190,7 +225,6 @@ const HRDashboardPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Filters */}
       <section className="hr-filters">
         <div className="hr-filters-row">
           <div className="hr-filter">
@@ -242,65 +276,46 @@ const HRDashboardPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Loading / error */}
       {isLoading && <p>Loading dashboard data…</p>}
       {loadError && !isLoading && (
         <p style={{ color: "red" }}>{loadError}</p>
       )}
 
-      {/* Metrics + analytics */}
-
-
-      {/* Metrics + analytics */}
-{!isLoading && !loadError && summary && (
-  <>
-    {/* HIGHLIGHTS STRIP */}
-    <section className="hr-highlights-strip">
-      <div className="hr-highlights-strip__item">
-        <span className="hr-highlights-strip__label">Highest exits (function)</span>
-        <span className="hr-highlights-strip__value">
-          {topFunctionByExits ?? "No data"}
-        </span>
-      </div>
-
-      <div className="hr-highlights-strip__item">
-        <span className="hr-highlights-strip__label">Highest exits (department)</span>
-        <span className="hr-highlights-strip__value">
-          {topDepartmentByExits ?? "No data"}
-        </span>
-      </div>
-
-      <div className="hr-highlights-strip__item">
-        <span className="hr-highlights-strip__label">Top reason for leaving</span>
-        <span className="hr-highlights-strip__value">
-          {topReasonByExits ?? "No data"}
-        </span>
-      </div>
-    </section>
-
-    {/* TOP METRICS */}
-    <section className="hr-stats-grid">
-      {/* ... your existing KPI cards (unchanged) ... */}
-    </section>
-
-    {/* ANALYTICS */}
-    <section className="hr-analytics-grid">
-      {/* ... your existing analytics cards ... */}
-    </section>
-  </>
-)}
-
-
-
-
       {!isLoading && !loadError && summary && (
         <>
-          {/* TOP METRICS */}
+          <section className="hr-highlights-strip">
+            <div className="hr-highlights-strip__item">
+              <span className="hr-highlights-strip__label">
+                Highest exits (function)
+              </span>
+              <span className="hr-highlights-strip__value">
+                {topFunctionByExits ?? "No data"}
+              </span>
+            </div>
+
+            <div className="hr-highlights-strip__item">
+              <span className="hr-highlights-strip__label">
+                Highest exits (department)
+              </span>
+              <span className="hr-highlights-strip__value">
+                {topDepartmentByExits ?? "No data"}
+              </span>
+            </div>
+
+            <div className="hr-highlights-strip__item">
+              <span className="hr-highlights-strip__label">
+                Top reason for leaving
+              </span>
+              <span className="hr-highlights-strip__value">
+                {topReasonByExits ?? "No data"}
+              </span>
+            </div>
+          </section>
+
           <section className="hr-stats-grid">
             <div className="hr-stat-card hr-stat-card--accent-1">
               <p className="hr-stat-label">
-                Total exits (
-                {PERIOD_OPTIONS.find((p) => p.value === period)?.label})
+                Total exits ({PERIOD_OPTIONS.find((p) => p.value === period)?.label})
               </p>
               <p className="hr-stat-value">{summary.totalExits}</p>
               <p className="hr-stat-caption">
@@ -336,13 +351,10 @@ const HRDashboardPage: React.FC = () => {
             </div>
           </section>
 
-          {/* ANALYTICS */}
           <section className="hr-analytics-grid">
-            {/* Exits per function */}
             <div className="hr-analytics-card">
               <h3>
-                Exits per function (
-                {PERIOD_OPTIONS.find((p) => p.value === period)?.label})
+                Exits per function ({PERIOD_OPTIONS.find((p) => p.value === period)?.label})
               </h3>
               {exitsByFunction.length === 0 ? (
                 <p className="hr-empty-state">
@@ -363,19 +375,16 @@ const HRDashboardPage: React.FC = () => {
                           }}
                         />
                       </div>
-                      <div className="hr-analytics-row__value">
-                        {item.count}
-                      </div>
+                      <div className="hr-analytics-row__value">{item.count}</div>
                     </li>
                   ))}
                 </ul>
               )}
               <p className="hr-analytics-footnote">
-                Pre‑aggregated across the selected period.
+                Pre-aggregated across the selected period.
               </p>
             </div>
 
-            {/* Exits per department */}
             <div className="hr-analytics-card">
               <h3>Exits per department (filtered)</h3>
               {exitsPerDepartment.length === 0 ? (
@@ -393,13 +402,11 @@ const HRDashboardPage: React.FC = () => {
                         <div
                           className="hr-analytics-row__bar hr-analytics-row__bar--secondary"
                           style={{
-                            width: `${Math.min(item.count * 12, 100)}%`,
+                            width: `${(item.count / maxExitsPerDepartmentCount) * 100}%`,
                           }}
                         />
                       </div>
-                      <div className="hr-analytics-row__value">
-                        {item.count}
-                      </div>
+                      <div className="hr-analytics-row__value">{item.count}</div>
                     </li>
                   ))}
                 </ul>
@@ -409,7 +416,6 @@ const HRDashboardPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Primary reasons */}
             <div className="hr-analytics-card">
               <h3>Primary reasons for leaving (filtered)</h3>
               {exitsByPrimaryReason.length === 0 ? (
@@ -427,13 +433,11 @@ const HRDashboardPage: React.FC = () => {
                         <div
                           className="hr-analytics-row__bar hr-analytics-row__bar--tertiary"
                           style={{
-                            width: `${(item.count / maxExitsPerDepartmentCount) * 100}%`,
+                            width: `${(item.count / maxExitsByReasonCount) * 100}%`,
                           }}
                         />
                       </div>
-                      <div className="hr-analytics-row__value">
-                        {item.count}
-                      </div>
+                      <div className="hr-analytics-row__value">{item.count}</div>
                     </li>
                   ))}
                 </ul>

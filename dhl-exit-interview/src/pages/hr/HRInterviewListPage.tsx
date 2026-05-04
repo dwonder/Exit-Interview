@@ -127,6 +127,11 @@ const HRInterviewListPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Small hint for mobile users about horizontal scroll */}
+      <p className="hr-table-scroll-hint">
+        Tip: scroll sideways to see all columns on smaller screens.
+      </p>
     </DHLLayout>
   );
 };

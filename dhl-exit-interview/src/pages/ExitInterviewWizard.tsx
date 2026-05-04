@@ -41,6 +41,16 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
     age: "",              // NEW
   });
 
+  const DEPARTMENT_OPTIONS = [
+  "HR",
+  "IT",
+  "Customer service",
+  "Operations",
+  "Commercial",
+  "General management",
+  "Finance",
+] as const;
+
   const [reasonsForLeaving, setReasonsForLeaving] = useState({
     primaryReason: "",
     secondaryReason: "",
@@ -93,17 +103,24 @@ const ExitInterviewWizard: React.FC<ExitInterviewWizardProps> = ({
 
       // Frontend validation for required fields
       if (
-        !employeeDetails.fullName.trim() ||
-        !employeeDetails.staffId.trim() ||
-        !employeeDetails.lastWorkingDay.trim() ||
-        !reasonsForLeaving.primaryReason.trim()
-      ) {
-        alert(
-          "Please fill in your name, staff ID, last working day and primary reason before submitting."
-        );
-        setIsSubmitting(false);
-        return;
-      }
+  !employeeDetails.fullName.trim() ||
+  !employeeDetails.staffId.trim() ||
+  !employeeDetails.department.trim() ||
+  !employeeDetails.lastWorkingDay.trim() ||
+  !reasonsForLeaving.primaryReason.trim()
+) {
+  alert(
+    "Please fill in your name, staff ID, department, last working day and primary reason before submitting."
+  );
+  setIsSubmitting(false);
+  return;
+}
+
+if (!DEPARTMENT_OPTIONS.includes(employeeDetails.department as any)) {
+  alert("Please select a valid department from the dropdown.");
+  setIsSubmitting(false);
+  return;
+}
 
       // 1) Build request body from wizard state – matches backend expectations
       const body = {

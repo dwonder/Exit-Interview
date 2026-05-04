@@ -98,15 +98,29 @@ const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
           </div>
 
           {/* Department / Function */}
-          <div className="dhl-form__group">
-            <label className="dhl-form__label">Department / Function</label>
-            <input
-              className="dhl-form__control"
-              value={values.department}
-              onChange={(e) => onChange("department", e.target.value)}
-              placeholder="e.g. Operations, Customer Service"
-            />
-          </div>
+          {/* Department */}
+<div className="dhl-form__group">
+  <label className="dhl-form__label">
+    <span className="dhl-form__label-required">*</span>
+    Department
+  </label>
+  <select
+    className="dhl-form__control"
+    value={values.department}
+    onChange={(e) => onChange("department", e.target.value)}
+    required
+  >
+    <option value="">Select department</option>
+    <option value="HR">HR</option>
+    <option value="IT">IT</option>
+    <option value="Customer service">Customer service</option>
+    <option value="Operations">Operations</option>
+    <option value="Commercial">Commercial</option>
+    <option value="General management">General management</option>
+    <option value="Finance">Finance</option>
+  </select>
+</div>
+
 
           {/* Location */}
           <div className="dhl-form__group">

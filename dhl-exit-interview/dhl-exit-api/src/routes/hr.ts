@@ -1,49 +1,31 @@
-// dhl-exit-api/src/routes/hr.ts
 import express from "express";
 import { getDb } from "../sqliteDb";
-import { analyseInterviewWithAI } from "../services/aiService";
-
-
-// At top of hr.ts (after imports)
-function buildPeriodCondition(period?: string): { where: string; params: any[] } {
-  if (!period || period === "all") {
-    return { where: "", params: [] };
-  }
-
-  const now = new Date();
-  const cutoff = new Date(now);
-
-  if (period === "ytd") {
-    cutoff.setMonth(0, 1); // 1 Jan current year
-    cutoff.setHours(0, 0, 0, 0);
-  } else if (period === "last_90_days") {
-    cutoff.setDate(cutoff.getDate() - 90);
-  } else if (period === "last_30_days") {
-    cutoff.setDate(cutoff.getDate() - 30);
-  } else {
-    // unknown → treat as all
-    return { where: "", params: [] };
-  }
-
-  const cutoffStr = cutoff.toISOString().slice(0, 10); // YYYY-MM-DD
-
-  return {
-    where: "WHERE date(SeparationDate) >= date(?)",
-    params: [cutoffStr],
-  };
-}
 
 const router = express.Router();
 
-/// GET /api/hr/exit-interviews
+// Helper: build SQLite date filter
+function getPeriodWhereClause(period?: string) {
+  switch (period) {
+    case "last_30_days":
+      return `date(SeparationDate) >= date('now', '-30 day')`;
+    case "last_90_days":
+      return `date(SeparationDate) >= date('now', '-90 day')`;
+    case "ytd":
+      return `strftime('%Y', SeparationDate) = strftime('%Y', 'now')`;
+    case "all":
+    default:
+      return `1=1`;
+  }
+}
+
+// GET /api/hr/exit-interviews
 router.get("/exit-interviews", async (req, res) => {
   try {
     const db = await getDb();
-    const period = req.query.period as string | undefined;
+    const period = String(req.query.period || "all");
+    const whereClause = getPeriodWhereClause(period);
 
-    const { where, params } = buildPeriodCondition(period);
-
-    const rows = await db.all(
+    const items = await db.all(
       `
       SELECT
         Id,
@@ -57,16 +39,14 @@ router.get("/exit-interviews", async (req, res) => {
         SeparationDate,
         PrimaryReason
       FROM ExitInterviews
-      ${where}
-      ORDER BY date(SeparationDate) DESC
-      LIMIT 100;
-      `,
-      params
+      WHERE ${whereClause}
+      ORDER BY date(SeparationDate) DESC, datetime(CreatedAt) DESC
+      `
     );
 
     return res.json({
-      items: rows,
-      total: rows.length,
+      items,
+      total: items.length,
     });
   } catch (err) {
     console.error("Error fetching interviews", err);
@@ -74,27 +54,65 @@ router.get("/exit-interviews", async (req, res) => {
   }
 });
 
-// DETAIL: GET /api/hr/exit-interviews/:id
+// GET /api/hr/exit-interviews/:id
 router.get("/exit-interviews/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
+  try {
     const db = await getDb();
-    const interview = await db.get(
+
+    const row = await db.get(
       `
       SELECT *
       FROM ExitInterviews
-      WHERE Id = ?;
+      WHERE Id = ?
       `,
       [id]
     );
 
-    if (!interview) {
+    if (!row) {
       return res.status(404).json({ error: "Not found" });
     }
 
-    // Return the row directly; frontend uses HrExitInterviewDetail
-    return res.json(interview);
+    return res.json({
+      Id: row.Id,
+      EmployeeName: row.EmployeeName,
+      EmployeeId: row.EmployeeId,
+      Email: row.Email,
+      Manager: row.Manager,
+      Position: row.Position,
+      FunctionName: row.FunctionName,
+      Department: row.Department,
+      Grade: row.Grade,
+      Location: row.Location,
+      LengthOfService: row.LengthOfService,
+      Age: row.Age,
+      SeparationDate: row.SeparationDate,
+      PrimaryReason: row.PrimaryReason,
+      SecondaryReason: row.SecondaryReason,
+      TertiaryReason: row.TertiaryReason,
+      SingleTriggerEvent:
+        row.SingleTriggerEvent === null
+          ? null
+          : Boolean(row.SingleTriggerEvent),
+      SingleTriggerExplanation: row.SingleTriggerExplanation,
+      Preventable:
+        row.Preventable === null ? null : Boolean(row.Preventable),
+      PreventableExplanation: row.PreventableExplanation,
+      Suggestions: row.Suggestions,
+      WouldRecommend:
+        row.WouldRecommend === null ? null : Boolean(row.WouldRecommend),
+      AcceptedAnotherJob:
+        row.AcceptedAnotherJob === null
+          ? null
+          : Boolean(row.AcceptedAnotherJob),
+      NewEmployer: row.NewEmployer,
+      NewJobTitle: row.NewJobTitle,
+      NewJobLocation: row.NewJobLocation,
+      HowFoundJob: row.HowFoundJob,
+      HowLongLooking: row.HowLongLooking,
+      CreatedAt: row.CreatedAt,
+    });
   } catch (err) {
     console.error("Error fetching interview detail", err);
     return res.status(500).json({ error: "Internal server error" });
@@ -105,38 +123,41 @@ router.get("/exit-interviews/:id", async (req, res) => {
 router.get("/metrics/summary", async (req, res) => {
   try {
     const db = await getDb();
-    const period = req.query.period as string | undefined;
-    const { where, params } = buildPeriodCondition(period);
+    const period = String(req.query.period || "all");
+    const whereClause = getPeriodWhereClause(period);
 
-    const totalRow = await db.get(
-      `SELECT COUNT(*) AS totalExits FROM ExitInterviews ${where};`,
-      params
+    const totalRes = await db.get(
+      `
+      SELECT COUNT(*) AS totalExits
+      FROM ExitInterviews
+      WHERE ${whereClause}
+      `
     );
 
-    const withJobRow = await db.get(
+    const withJobRes = await db.get(
       `
       SELECT COUNT(*) AS exitsWithNewJob
       FROM ExitInterviews
-      ${where ? where + " AND AcceptedAnotherJob = 1" : "WHERE AcceptedAnotherJob = 1"};
-      `,
-      params
+      WHERE ${whereClause}
+        AND AcceptedAnotherJob = 1
+      `
     );
 
-    const recommendRow = await db.get(
+    const recommendRes = await db.get(
       `
       SELECT
         SUM(CASE WHEN WouldRecommend = 1 THEN 1 ELSE 0 END) AS recommendYes,
         COUNT(*) AS total
       FROM ExitInterviews
-      ${where ? where + " AND WouldRecommend IS NOT NULL" : "WHERE WouldRecommend IS NOT NULL"};
-      `,
-      params
+      WHERE ${whereClause}
+        AND WouldRecommend IS NOT NULL
+      `
     );
 
-    const totalExits = totalRow?.totalExits ?? 0;
-    const exitsWithNewJob = withJobRow?.exitsWithNewJob ?? 0;
-    const recommendYes = recommendRow?.recommendYes ?? 0;
-    const recommendTotal = recommendRow?.total ?? 0;
+    const totalExits = totalRes?.totalExits ?? 0;
+    const exitsWithNewJob = withJobRes?.exitsWithNewJob ?? 0;
+    const recommendYes = recommendRes?.recommendYes ?? 0;
+    const recommendTotal = recommendRes?.total ?? 0;
     const recommendRate =
       recommendTotal === 0 ? 0 : recommendYes / recommendTotal;
 
@@ -144,105 +165,34 @@ router.get("/metrics/summary", async (req, res) => {
       totalExits,
       exitsWithNewJob,
       recommendRate,
-      avgSentimentScore: null, // later from AI
+      avgSentimentScore: null,
     });
   } catch (err) {
     console.error("Error fetching metrics summary", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 // GET /api/hr/metrics/exits-by-function
 router.get("/metrics/exits-by-function", async (req, res) => {
   try {
     const db = await getDb();
-    const period = req.query.period as string | undefined;
-    const { where, params } = buildPeriodCondition(period);
+    const period = String(req.query.period || "all");
+    const whereClause = getPeriodWhereClause(period);
 
-    const rows = await db.all(
+    const items = await db.all(
       `
       SELECT
-        IFNULL(FunctionName, 'Unknown') AS FunctionName,
+        COALESCE(FunctionName, 'Unknown') AS FunctionName,
         COUNT(*) AS count
       FROM ExitInterviews
-      ${where}
-      GROUP BY FunctionName
-      ORDER BY count DESC;
-      `,
-      params
-    );
-
-    return res.json({ items: rows });
-  } catch (err) {
-    console.error("Error fetching exits by function", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// GET /api/hr/metrics/summary
-router.get("/metrics/summary", async (_req, res) => {
-  try {
-    const db = await getDb();
-
-    const totalRow = await db.get(
-      `SELECT COUNT(*) AS totalExits FROM ExitInterviews;`
-    );
-
-    const withJobRow = await db.get(
-      `
-      SELECT COUNT(*) AS exitsWithNewJob
-      FROM ExitInterviews
-      WHERE AcceptedAnotherJob = 1;
+      WHERE ${whereClause}
+      GROUP BY COALESCE(FunctionName, 'Unknown')
+      ORDER BY count DESC, FunctionName ASC
       `
     );
 
-    const recommendRow = await db.get(
-      `
-      SELECT
-        SUM(CASE WHEN WouldRecommend = 1 THEN 1 ELSE 0 END) AS recommendYes,
-        COUNT(*) AS total
-      FROM ExitInterviews
-      WHERE WouldRecommend IS NOT NULL;
-      `
-    );
-
-    const totalExits = totalRow?.totalExits ?? 0;
-    const exitsWithNewJob = withJobRow?.exitsWithNewJob ?? 0;
-    const recommendYes = recommendRow?.recommendYes ?? 0;
-    const recommendTotal = recommendRow?.total ?? 0;
-    const recommendRate =
-      recommendTotal === 0 ? 0 : recommendYes / recommendTotal;
-
-    return res.json({
-      totalExits,
-      exitsWithNewJob,
-      recommendRate,
-      avgSentimentScore: null, // later from AI
-    });
-  } catch (err) {
-    console.error("Error fetching metrics summary", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// GET /api/hr/metrics/exits-by-function
-router.get("/metrics/exits-by-function", async (_req, res) => {
-  try {
-    const db = await getDb();
-
-    const rows = await db.all(
-      `
-      SELECT
-        IFNULL(FunctionName, 'Unknown') AS FunctionName,
-        COUNT(*) AS count
-      FROM ExitInterviews
-      GROUP BY FunctionName
-      ORDER BY count DESC;
-      `
-    );
-
-    return res.json({ items: rows });
+    return res.json({ items });
   } catch (err) {
     console.error("Error fetching exits by function", err);
     return res.status(500).json({ error: "Internal server error" });
@@ -252,20 +202,38 @@ router.get("/metrics/exits-by-function", async (_req, res) => {
 // POST /api/hr/exit-interviews/:id/ai-analyse
 router.post("/exit-interviews/:id/ai-analyse", async (req, res) => {
   const { id } = req.params;
+
   try {
     const db = await getDb();
 
-    const interview = await db.get(
-      `SELECT * FROM ExitInterviews WHERE Id = ?;`,
+    const row = await db.get(
+      `
+      SELECT *
+      FROM ExitInterviews
+      WHERE Id = ?
+      `,
       [id]
     );
 
-    if (!interview) {
+    if (!row) {
       return res.status(404).json({ error: "Not found" });
     }
 
-    const analysis = await analyseInterviewWithAI(interview);
-    // TODO: save to ExitInterviewAIAnalysis table if you want
+    const analysis = {
+      mainReasons: [row.PrimaryReason || "Not stated"],
+      positives: row.WouldRecommend === 1
+        ? ["Employee would recommend DHL Nigeria as an employer."]
+        : [],
+      painPoints:
+        row.PrimaryReason === "Compensation and benefits"
+          ? ["Employee indicated compensation and benefits concerns."]
+          : [],
+      suggestions: row.Suggestions ? [row.Suggestions] : [],
+      riskNotes:
+        row.WouldRecommend === 0
+          ? "Potential risk of negative word-of-mouth. Consider follow-up if appropriate."
+          : undefined,
+    };
 
     return res.json(analysis);
   } catch (err) {
